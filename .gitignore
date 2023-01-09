@@ -1,0 +1,8 @@
+# VEnv
+venv/
+
+# Mac
+*.DS_Store
+
+# PyChard
+*.idea/
