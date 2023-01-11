@@ -1,7 +1,11 @@
+# This program is protected by the MIT License © 2023 RandomKiddo
+
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
 import sys
+import validators
 
 class MainWindow(QMainWindow):
 
@@ -59,6 +63,12 @@ class MainWindow(QMainWindow):
 
         self.add_new_tab(QUrl('https://duckduckgo.com'), 'Homepage')  # Create the 'home' tab
 
+        # Create shortcuts
+        self.new_tab_sc = QShortcut(QKeySequence('Ctrl+T'), self)  # New tab shortcut
+        self.new_tab_sc.activated.connect(lambda: self.add_new_tab())
+        self.reload_sc = QShortcut(QKeySequence('Ctrl+R'), self)  # Reload shortcut
+        self.reload_sc.activated.connect(lambda: self.tabs.currentWidget().reload())
+
         self.show()  # Show the window
 
         self.setWindowTitle('OpenBrowser - © 2023')  # Set the window title
@@ -101,9 +111,12 @@ class MainWindow(QMainWindow):
 
     # Navigate to a new url
     def navigate(self):
-        q = QUrl(self.url_bar.text())
+        text = self.url_bar.text()
+        q = QUrl(text)
         if q.scheme() == "":
-            q.setScheme("http")
+            q.setScheme("https")
+        if not validators.url('https://' + text):
+            q = QUrl('https://duckduckgo.com/?q={}'.format(text))
         self.tabs.currentWidget().setUrl(q)
 
     # Update the url bar
@@ -126,8 +139,27 @@ class MainWindow(QMainWindow):
         else:
             a0.ignore()
 
+def set_palette(app):
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(53, 53, 53))
+    palette.setColor(QPalette.WindowText, Qt.white)
+    palette.setColor(QPalette.Base, QColor(25, 25, 25))
+    palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+    palette.setColor(QPalette.ToolTipBase, Qt.black)
+    palette.setColor(QPalette.ToolTipText, Qt.white)
+    palette.setColor(QPalette.Text, Qt.white)
+    palette.setColor(QPalette.Button, QColor(53, 53, 53))
+    palette.setColor(QPalette.ButtonText, Qt.white)
+    palette.setColor(QPalette.BrightText, Qt.red)
+    palette.setColor(QPalette.Link, QColor(42, 130, 218))
+    palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+    palette.setColor(QPalette.HighlightedText, Qt.black)
+    app.setPalette(palette)
+
 if __name__ == '__main__':  # Only run if this is the file running
     app = QApplication(sys.argv)  # Create the QApplication
+    app.setStyle("Fusion")
+    set_palette(app)
     app.setApplicationName("OpenBrowser - © 2023")  # Set app name
     window = MainWindow()  # Instantiate the window
     app.exec_()  # Execute

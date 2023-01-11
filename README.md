@@ -13,19 +13,17 @@ i.e. if a dependency requires another one, that is not listed here):
 `PyQt5`: The backbone of this project. Deals with all browser related tasks.
 Provided by Riverbank Computing - [Link](https://www.riverbankcomputing.com/software/pyqt/)
 
-`pandas`: Deals with clipboard related tasks, as it comes bundled as of writing - [Link](https://pandas.pydata.org)
+`validators`: Deals with link/url validation - [Link](https://validators.readthedocs.io/en/latest/)
 ___
 
 ### Features
 
 Current features, as of writing:
 
-Basic Features: `search`, `back`, `forward`, `refresh`, `more`, `copy`
-
 ___
 
 [Back to Top](#openbrowser)
 
-<sub>This page was last edited on 01.10.2023</sub>
+<sub>This page was last edited on 01.11.2023</sub>
 
 <sub>Copyright © 2023 RandomKiddo - MIT License Protected</sub>
