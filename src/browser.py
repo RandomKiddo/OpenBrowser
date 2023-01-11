@@ -1,110 +1,106 @@
-from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
-from PyQt5.QtGui import *
+import sys
 
-from pandas.io import clipboard
+class MainWindow(QMainWindow):
 
-class Browser:
-    def __init__(self):
-        self.window = QWidget()  # Instantiate the widget and set its title (next line)
-        self.window.setWindowTitle("RandomKiddo's Web Browser")
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
 
-        self.layout = QVBoxLayout()  # Set the vertical layout to a box layout
-        self.horizontal = QHBoxLayout()  # Set the horizontal layout to a box layout
+        self.tabs = QTabWidget()
+        self.tabs.setDocumentMode(True)
+        self.tabs.tabBarDoubleClicked.connect(self.tab_open_dc)
+        self.tabs.currentChanged.connect(self.tab_changed)
+        self.tabs.setTabsClosable(True)
+        self.tabs.tabCloseRequested.connect(self.close_tab)
+        self.setCentralWidget(self.tabs)
 
-        self.url_bar = QTextEdit()  # Instantiate the URL bar
-        self.url_bar.setMaximumHeight(30)  # Set max height to 30 for URL bar
+        self.status = QStatusBar()
+        self.setStatusBar(self.status)
 
-        self.search = QPushButton("Search")  # Create the search button
-        self.search.setMinimumHeight(30)  # Set min height to 30 for the search button
+        nav = QToolBar('Navigation')
+        self.addToolBar(nav)
 
-        self.back = QPushButton("<")  # Create the back button
-        self.back.setMinimumHeight(30)  # Set min height to 30 for the back button
+        back = QAction('<', self)
+        back.setStatusTip('Go back to the previous page')
+        back.triggered.connect(lambda: self.tabs.currentWidget().back())
+        nav.addAction(back)
 
-        self.refresh = QPushButton('Refresh')  # Create the refresh button
-        self.refresh.setMinimumHeight(30)  # Set min height to 30 for the refresh button
+        fwd = QAction(">", self)
+        fwd.setStatusTip('Go forward to the next page')
+        fwd.triggered.connect(lambda: self.tabs.currentWidget().forward())
+        nav.addAction(fwd)
 
-        self.fwd = QPushButton(">")  # Create the forward button
-        self.fwd.setMinimumHeight(30)  # Set min height to 30 for the forward button
+        reload = QAction('Reload', self)
+        reload.setStatusTip('Reload current page')
+        reload.triggered.connect(lambda: self.tabs.currentWidget().reload())
+        nav.addAction(reload)
 
-        self.more = QPushButton("...")  # Create the more button
-        self.more.setMinimumHeight(30)  # Set min height to 30 for the forward button
+        nav.addSeparator()
 
-        self.history = QPushButton("History")  # Create the history button
-        self.history.setMinimumHeight(30)  # Set min height to 30 for the history button
-        self.history.setMaximumWidth(100)  # Set max width to 100 for the history button
-        self.history_list = []  # Instantiate history list
+        self.url_bar = QLineEdit()
+        self.url_bar.returnPressed.connect(self.navigate)
+        nav.addWidget(self.url_bar)
 
-        self.copy = QPushButton("Copy")  # Create the copy button
-        self.copy.setMinimumHeight(30)  # Set min height to 30 for the copy button
-        self.copy.setMaximumWidth(100)  # Set max width to 100 for the copy button
-        self.copy.setMinimumWidth(100)  # Set min width to 30 for the copy button
+        nav.addSeparator()
 
-        self.horizontal.addWidget(self.more)  # Add the widgets
-        self.horizontal.addWidget(self.url_bar)
-        self.horizontal.addWidget(self.search)
-        self.horizontal.addWidget(self.back)
-        self.horizontal.addWidget(self.refresh)
-        self.horizontal.addWidget(self.fwd)
+        add_tab = QAction('+', self)
+        add_tab.setStatusTip('Create new tab')
+        add_tab.triggered.connect(lambda: self.add_new_tab(url=None, title='New Tab'))
+        nav.addAction(add_tab)
 
-        self.more_box = QVBoxLayout()  # Create the layout for the 'more' tab
-        self.more_box.addWidget(self.history)  # Add the widgets and hide them
-        self.history.hide()
-        self.more_box.addWidget(self.copy)
-        self.copy.hide()
+        self.add_new_tab(QUrl('https://duckduckgo.com'), 'Homepage')
 
-        self.browser = QWebEngineView()  # Instantiate the engine view
+        self.show()
 
-        self.search.clicked.connect(lambda: self.navigate(self.url_bar.toPlainText()))  # Connect the search bar to navigation
-        self.back.clicked.connect(self.browser.back)  # Connect back button to its browser function
-        self.refresh.clicked.connect(self.browser.reload)  # Connect refresh button to its browser function
-        self.fwd.clicked.connect(self.browser.forward)  # Connect forward button to its browser function
-        self.more.clicked.connect(self.more_func)  # Connect more button to its browser function
-        self.more_tracker = False  # Track if 'more' is expanded
-        self.copy.clicked.connect(self.copy_url)  # Connect copy button to its browser function
+        self.setWindowTitle('OpenBrowser - © 2023')
 
-        self.layout.addLayout(self.horizontal, stretch=0)  # Add the horizontal layout
-        self.layout.addLayout(self.more_box, stretch=0)  # Add the 'more' box layout
-        self.layout.addWidget(self.browser)  # Add the browser itself
+    def add_new_tab(self, url=None, title='New Tab'):
+        if url is None:
+            # creating a google url
+            url = QUrl('https://duckduckgo.com')
+        browser = QWebEngineView()
+        browser.setUrl(url)
+        i = self.tabs.addTab(browser, title)
+        self.tabs.setCurrentIndex(i)
+        browser.urlChanged.connect(lambda url, browser=browser: self.update_url_bar(url, browser))
+        browser.loadFinished.connect(lambda _, i=i, browser=browser: self.tabs.setTabText(i, browser.page().title()))
 
-        self.browser.setUrl(QUrl('https://duckduckgo.com/?va=b&t=hc'))  # Set default URL to DuckDuckGo
+    def tab_open_dc(self, i):
+        if i == -1:
+            self.add_new_tab()
 
-        self.window.setLayout(self.layout)  # Set the window layout
-        self.window.show()  # Show the window
+    def tab_changed(self, i):
+        url = self.tabs.currentWidget().url()
+        self.update_url_bar(url, self.tabs.currentWidget())
+        self.update_title(self.tabs.currentWidget())
 
-    # Navigate to a new page
-    def navigate(self, url):
-        if not url.startswith('http'):
-            url = 'https://' + url
-            self.url_bar.setText(url)
-            self.history_list.append(url)
-        self.browser.setUrl(QUrl(url))
+    def close_tab(self, i):
+        if self.tabs.count() < 2:
+            return
+        self.tabs.removeTab(i)
 
-    # Expand and retract the more tab
-    def more_func(self):
-        if not self.more_tracker:
-            self.history.show()
-            self.copy.show()
-            self.more_tracker = True
-        else:
-            self.history.hide()
-            self.copy.hide()
-            self.more_tracker = False
+    def update_title(self, browser):
+        if browser != self.tabs.currentWidget():
+            return
+        title = self.tabs.currentWidget().page().title()
+        self.setWindowTitle(title)
 
-    # Copy the url to the clipboard
-    def copy_url(self):
-        url = self.url_bar.toPlainText()
-        if 'https' not in url:
-            url = 'https://' + url
-        clipboard.copy(url)
-        self.copy.setText('Copied!')
-        self.timer = QTimer()
-        self.timer.timeout.connect(lambda: self.copy.setText('Copy'))
-        self.timer.start(1500)
+    def navigate(self):
+        q = QUrl(self.url_bar.text())
+        if q.scheme() == "":
+            q.setScheme("http")
+        self.tabs.currentWidget().setUrl(q)
+
+    def update_url_bar(self, q, browser=None):
+        if browser != self.tabs.currentWidget():
+            return
+        self.url_bar.setText(q.toString())
+        self.url_bar.setCursorPosition(0)
 
 if __name__ == '__main__':
-    app = QApplication([])  # Create the application
-    window = Browser()  # Create the browser
-    app.exec()  # Execute the file
-
+    app = QApplication(sys.argv)
+    app.setApplicationName("Geek PyQt5")
+    window = MainWindow()
+    app.exec_()
