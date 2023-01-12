@@ -71,6 +71,8 @@ class MainWindow(QMainWindow):
         self.new_tab_sc.activated.connect(lambda: self.add_new_tab())
         self.reload_sc = QShortcut(QKeySequence('Ctrl+R'), self)  # Reload shortcut
         self.reload_sc.activated.connect(lambda: self.tabs.currentWidget().reload())
+        self.goto_tab_sc = QShortcut(QKeySequence('Ctrl+K'), self)  # Goto tab shortcut
+        self.goto_tab_sc.activated.connect(lambda: self.prompt_goto())
 
         u_width, u_height = pyautogui.size()  # Get screen dimensions
         self.setMaximumWidth(u_width)  # Set max width
@@ -148,13 +150,31 @@ class MainWindow(QMainWindow):
 
     # Confirm on close function
     def closeEvent(self, a0):
-        msg = 'You are attempting to exit.\nAre you sure?'
-        reply = QMessageBox.question(self, 'Message', msg, QMessageBox.No, QMessageBox.Yes)
-        if reply == QMessageBox.Yes:
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setText('You are attempting to quit OpenBrowser')
+        msg.setInformativeText('Is this correct?')
+        msg.setWindowTitle('Quit OpenBrowser?')
+        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        i = msg.exec_()
+        if i == QMessageBox.Yes:
             a0.accept()
         else:
             a0.ignore()
 
+    # Prompt the goto tab panel
+    def prompt_goto(self):
+        msg = 'Where to boss?'
+        tab_list = []
+        for _ in range(self.tabs.count()):
+            tab_list.append('{}: {}'.format(_+1, self.tabs.tabText(_)))
+        for _ in tab_list:
+            msg += '\n{}'.format(_)
+        dialog = QInputDialog()
+        i = dialog.getInt(self, msg, msg, 1, 1, self.tabs.count())
+        self.tabs.setCurrentIndex(i[0]-1)
+
+# Set dark mode palette
 def set_palette(app):
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor(53, 53, 53))
