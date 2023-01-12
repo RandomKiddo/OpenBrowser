@@ -6,7 +6,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
 import sys
 import validators
+import pyautogui
 
+# todo 'goto tab function'
 class MainWindow(QMainWindow):
 
     def __init__(self, *args, **kwargs):
@@ -29,6 +31,7 @@ class MainWindow(QMainWindow):
         more = QAction('More', self)  # Create the more button, its tips, and its trigger action
         more.setStatusTip('Click for more')
         more.triggered.connect(lambda: self.expand_more())
+        self.more_open = False
         nav.addAction(more)  # Add action to the nav bar
 
         nav.addSeparator()
@@ -69,6 +72,10 @@ class MainWindow(QMainWindow):
         self.reload_sc = QShortcut(QKeySequence('Ctrl+R'), self)  # Reload shortcut
         self.reload_sc.activated.connect(lambda: self.tabs.currentWidget().reload())
 
+        u_width, u_height = pyautogui.size()  # Get screen dimensions
+        self.setMaximumWidth(u_width)  # Set max width
+        self.setMaximumHeight(u_height)  # Set max height
+
         self.show()  # Show the window
 
         self.setWindowTitle('OpenBrowser - © 2023')  # Set the window title
@@ -76,7 +83,6 @@ class MainWindow(QMainWindow):
     # Create a new tab with the passed url and title
     def add_new_tab(self, url=None, title='New Tab'):
         if url is None:
-            # creating a google url
             url = QUrl('https://duckduckgo.com')
         browser = QWebEngineView()
         browser.setUrl(url)
@@ -128,6 +134,16 @@ class MainWindow(QMainWindow):
 
     # Expand the more accordion
     def expand_more(self):
+        if self.more_open:  # Close
+            pass
+        else:  # Open
+            vertical = QVBoxLayout()
+            hist = QAction('History', self)  # Create the back button, its tips, and its trigger action
+            hist.setStatusTip('See search history')
+            hist.triggered.connect(self.go_to_history)
+            self.setLayout(vertical)
+
+    def go_to_history(self):
         pass
 
     # Confirm on close function
@@ -158,7 +174,7 @@ def set_palette(app):
 
 if __name__ == '__main__':  # Only run if this is the file running
     app = QApplication(sys.argv)  # Create the QApplication
-    app.setStyle("Fusion")
+    app.setStyle('Fusion')
     set_palette(app)
     app.setApplicationName("OpenBrowser - © 2023")  # Set app name
     window = MainWindow()  # Instantiate the window

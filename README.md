@@ -14,6 +14,8 @@ i.e. if a dependency requires another one, that is not listed here):
 Provided by Riverbank Computing - [Link](https://www.riverbankcomputing.com/software/pyqt/)
 
 `validators`: Deals with link/url validation - [Link](https://validators.readthedocs.io/en/latest/)
+
+`pyautogui`: Deals with user screen dimensions - [Link](https://pyautogui.readthedocs.io/en/latest/)
 ___
 
 ### Features
@@ -24,6 +26,6 @@ ___
 
 [Back to Top](#openbrowser)
 
-<sub>This page was last edited on 01.11.2023</sub>
+<sub>This page was last edited on 01.12.2023</sub>
 
 <sub>Copyright © 2023 RandomKiddo - MIT License Protected</sub>
