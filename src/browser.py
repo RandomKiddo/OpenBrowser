@@ -4,13 +4,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import *
+from bs4 import BeautifulSoup as Soup
+
 import sys
 import validators
 import pyautogui
+import datetime
+import os
 
-# todo 'goto tab function'
 class MainWindow(QMainWindow):
-
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)  # Call the superclass constructor
 
@@ -28,11 +30,14 @@ class MainWindow(QMainWindow):
         nav = QToolBar('Navigation')  # Create a navigation bar
         self.addToolBar(nav)
 
-        more = QAction('More', self)  # Create the more button, its tips, and its trigger action
-        more.setStatusTip('Click for more')
-        more.triggered.connect(lambda: self.expand_more())
-        self.more_open = False
-        nav.addAction(more)  # Add action to the nav bar
+        self.more = QComboBox()  # Create the more dropdown, its tips, and its trigger action
+        self.more.setStatusTip('Click for more')
+        self.more.addItems(['More', 'History'])
+        self.more.activated.connect(self.more_activated)
+        self.more.setEditable(False)
+        self.history_list = []
+
+        nav.addWidget(self.more)  # Add combo box to the nav bar
 
         nav.addSeparator()
 
@@ -123,8 +128,15 @@ class MainWindow(QMainWindow):
         q = QUrl(text)
         if q.scheme() == "":
             q.setScheme("https")
-        if not validators.url('https://' + text):
+        if not validators.url('https://' + text) and not text.startswith('file://'):
             q = QUrl('https://duckduckgo.com/?q={}'.format(text))
+        now = datetime.datetime.now()
+        suffix = 'AM'
+        if now.hour >= 12:
+            suffix = 'PM'
+        date = datetime.datetime.strftime(now, "%m/%d/%Y @ %H:%M") + suffix
+        if 'file://' not in text:
+            self.history_list.append(HistoryEntry(q, date))
         self.tabs.currentWidget().setUrl(q)
 
     # Update the url bar
@@ -135,18 +147,34 @@ class MainWindow(QMainWindow):
         self.url_bar.setCursorPosition(0)
 
     # Expand the more accordion
-    def expand_more(self):
-        if self.more_open:  # Close
-            pass
-        else:  # Open
-            vertical = QVBoxLayout()
-            hist = QAction('History', self)  # Create the back button, its tips, and its trigger action
-            hist.setStatusTip('See search history')
-            hist.triggered.connect(self.go_to_history)
-            self.setLayout(vertical)
+    def more_activated(self, index):
+        if index == 0:
+            return
+        elif index == 1:
+            self.go_to_history()
 
     def go_to_history(self):
-        pass
+        try:
+            with open('cache/history.html', 'r', encoding='utf-8') as orig:
+                html = orig.read()
+        except FileNotFoundError:
+            pass
+        f = open('cache/history.html', 'w')
+        soup = Soup(html, 'html.parser')
+        div = soup.find('div')
+        for _ in self.history_list:
+            h3 = Soup('<h3> | {}</h3>'.format(_.time_accessed))
+            a = h3.new_tag('a', attrs={'href': '{}'.format(_.qurl.toString())})
+            a.string = _.qurl.toString()
+            h3.h3.insert(0, a)
+            soup.new_tag(h3)
+            soup.div.insert(0, h3)
+        f.writelines(soup.prettify())
+        self.add_new_tab(title='History')
+        self.tabs.setCurrentIndex(self.tabs.count()-1)
+        self.url_bar.setText('file://' + os.path.realpath('cache/history.html'))
+        self.navigate()
+        self.more.setCurrentIndex(0)
 
     # Confirm on close function
     def closeEvent(self, a0):
@@ -164,7 +192,7 @@ class MainWindow(QMainWindow):
 
     # Prompt the goto tab panel
     def prompt_goto(self):
-        msg = 'Where to boss?'
+        msg = 'Where to, boss?'
         tab_list = []
         for _ in range(self.tabs.count()):
             tab_list.append('{}: {}'.format(_+1, self.tabs.tabText(_)))
@@ -173,6 +201,11 @@ class MainWindow(QMainWindow):
         dialog = QInputDialog()
         i = dialog.getInt(self, msg, msg, 1, 1, self.tabs.count())
         self.tabs.setCurrentIndex(i[0]-1)
+
+class HistoryEntry:
+    def __init__(self, qurl, time_accessed):
+        self.qurl = qurl
+        self.time_accessed = time_accessed
 
 # Set dark mode palette
 def set_palette(app):
