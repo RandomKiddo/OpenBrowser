@@ -1,3 +1,7 @@
+/**
+This program is protected by the MIT License © 2023 RandomKiddo
+*/
+
 var fs = require("fs");
 
 function loadDefaultSettings() {
