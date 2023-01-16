@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
 
         self.more = QComboBox()  # Create the more dropdown, its tips, and its trigger action
         self.more.setStatusTip('Click for more')
-        self.more.addItems(['More', 'History'])
+        self.more.addItems(['More', 'History', 'Settings'])
         self.more.activated.connect(self.more_activated)
         self.more.setEditable(False)
         self.history_list = []
@@ -152,6 +152,8 @@ class MainWindow(QMainWindow):
             return
         elif index == 1:
             self.go_to_history()
+        elif index == 2:
+            self.go_to_settings()
 
     def go_to_history(self):
         try:
@@ -201,6 +203,10 @@ class MainWindow(QMainWindow):
         dialog = QInputDialog()
         i = dialog.getInt(self, msg, msg, 1, 1, self.tabs.count())
         self.tabs.setCurrentIndex(i[0]-1)
+
+    # Go to the settings html file
+    def go_to_settings(self):
+        pass
 
 class HistoryEntry:
     def __init__(self, qurl, time_accessed):
