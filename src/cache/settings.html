@@ -7,7 +7,7 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <title>Settings</title>
     </head>
-    <body>
+    <body onload="loadDefaultSettings();">
         <h1 id="main">OpenBrowser Settings</h1>
         <hr />
         <div>
@@ -17,7 +17,7 @@
             <br />
             <br />
             &emsp;&nbsp;&nbsp;
-            <label class="switch" onclick="switchChangeState(this);">
+            <label class="switch" onclick="switchChangeState(this);" id="incognitoSwitch">
                 <input type="checkbox">
                 <span class="slider round"></span>
             </label>
