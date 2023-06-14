@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.tabs.tabCloseRequested.connect(self.close_tab)  # Define what to do when closing a tab
         self.setCentralWidget(self.tabs)  # Set the tabs as the central widget
 
-        self.logger.log('Tab controls defined')
+        self.logger.log('Tab controls defined\n')
 
         self.status = QStatusBar()  # Create a status bar
         self.setStatusBar(self.status)
@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
 
         self.add_new_tab(QUrl('https://duckduckgo.com'), 'Homepage')  # Create the 'home' tab
 
-        self.logger.log('Navigation and home page initialized')
+        self.logger.log('Navigation and home page initialized\n')
 
         # Create shortcuts
         self.new_tab_sc = QShortcut(QKeySequence('Ctrl+T'), self)  # New tab shortcut
@@ -93,31 +93,39 @@ class MainWindow(QMainWindow):
         self.reload_sc.activated.connect(lambda: self.tabs.currentWidget().reload())
         self.goto_tab_sc = QShortcut(QKeySequence('Ctrl+K'), self)  # Goto tab shortcut
         self.goto_tab_sc.activated.connect(lambda: self.prompt_goto())
+        self.find_on_page_sc = QShortcut(QKeySequence('Ctrl+F'), self)
+        self.find_on_page_sc.activated.connect(lambda: self.find_dialogue())
 
-        self.logger.log('Shortcuts active')
+        self.logger.log('Shortcuts active\n')
 
         u_width, u_height = pyautogui.size()  # Get screen dimensions
         self.setMaximumWidth(u_width)  # Set max width
         self.setMaximumHeight(u_height)  # Set max height
 
-        self.logger.log('Max dimensions defined, browser now active')
+        self.resize(u_width, u_height) # Resize the window to full dimensions
+
+        self.logger.log('Max dimensions defined, browser now active\n')
 
         self.show()  # Show the window
 
         self.setWindowTitle('OpenBrowser - © 2023')  # Set the window title
 
         self.ensure_data_generation()
-        self.logger.log('Data generation ensured')
+        self.logger.log('Data generation ensured\n')
+
+        self.settings = json.load(open('cache/SETTINGS.json'))
+        self.logger.log('Settings JSON loaded in\n')
 
     def ensure_data_generation(self):
         if not os.path.exists('cache/SETTINGS.json'):
-            self.logger.log('ERROR: SETTINGS.json file not found! Generating default configurations...')
+            self.logger.log('ERROR: SETTINGS.json file not found! Generating default configurations...\n')
             data = {
-                'incognito': False
+                'incognito': False,
+                  "force_https": False
             }
             json.dump(data, open('cache/SETTINGS.json', 'w'))
         else:
-            self.logger.log('SETTINGS.json located- ensured at user initiation')
+            self.logger.log('SETTINGS.json located- ensured at user initiation\n')
 
     # Create a new tab with the passed url and title
     def add_new_tab(self, url=None, title='New Tab'):
@@ -161,14 +169,20 @@ class MainWindow(QMainWindow):
         if q.scheme() == "":
             q.setScheme("https")
         if not validators.url('https://' + text) and not text.startswith('file://'):
-            q = QUrl('https://duckduckgo.com/?q={}'.format(text))
+            if not self.settings['force_https'] and not validators.url('http://' + text):
+                q = QUrl('https://duckduckgo.com/?q={}'.format(text))
+                self.logger.log('WARNING: Link invalid or broken, or not HTTPS\n')
+            elif self.settings['force_https'] and validators.url('http://' + text):
+                q.setScheme("http")
+                self.logger.log('WARNING: Not forcing HTTPS; HTTPS website not located, using HTTP by preferences. Proceed at own risk.\n')
         now = datetime.datetime.now()
         suffix = 'AM'
         if now.hour >= 12:
             suffix = 'PM'
         date = datetime.datetime.strftime(now, "%m/%d/%Y @ %H:%M") + suffix
-        if 'file://' not in text:
+        if 'file://' not in text and not self.settings['incognito']:
             self.history_list.append(HistoryEntry(q, date))
+            self.go_to_history(navigating=False)
         self.tabs.currentWidget().setUrl(q)
 
     # Update the url bar
@@ -187,7 +201,7 @@ class MainWindow(QMainWindow):
         elif index == 2:
             self.go_to_settings()
 
-    def go_to_history(self):
+    def go_to_history(self, navigating: bool = True):
         try:
             with open('cache/history.html', 'r', encoding='utf-8') as orig:
                 html = orig.read()
@@ -197,18 +211,20 @@ class MainWindow(QMainWindow):
         soup = Soup(html, 'html.parser')
         div = soup.find('div')
         for _ in self.history_list:
-            h3 = Soup('<h3> | {}</h3>'.format(_.time_accessed))
+            h3 = Soup('<h3> | {}</h3>'.format(_.time_accessed), 'html.parser')
             a = h3.new_tag('a', attrs={'href': '{}'.format(_.qurl.toString())})
             a.string = _.qurl.toString()
             h3.h3.insert(0, a)
             soup.new_tag(h3)
             soup.div.insert(0, h3)
         f.writelines(soup.prettify())
-        self.add_new_tab(title='History')
-        self.tabs.setCurrentIndex(self.tabs.count()-1)
-        self.url_bar.setText('file://' + os.path.realpath('cache/history.html'))
-        self.navigate()
-        self.more.setCurrentIndex(0)
+        f.close()
+        if navigating:
+            self.add_new_tab(title='History')
+            self.tabs.setCurrentIndex(self.tabs.count()-1)
+            self.url_bar.setText('file://' + os.path.realpath('cache/history.html'))
+            self.navigate()
+            self.more.setCurrentIndex(0)
 
     # Confirm on close function
     def closeEvent(self, a0):
@@ -223,6 +239,7 @@ class MainWindow(QMainWindow):
             a0.accept()
         else:
             a0.ignore()
+        self.logger.log('OpenBrowser was asked to close. Closing...\n')
         self.logger.close()
 
     # Prompt the goto tab panel
@@ -277,6 +294,9 @@ class MainWindow(QMainWindow):
         self.url_bar.setText('file://' + os.path.realpath('cache/settings.html'))
         self.navigate()
         self.more.setCurrentIndex(0)
+
+    def find_dialogue(self):
+        pass
 
 class HistoryEntry:
     def __init__(self, qurl, time_accessed):

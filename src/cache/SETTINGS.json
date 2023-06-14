@@ -1,3 +1,4 @@
 {
-  "incognito": false
+  "incognito": false,
+  "force_https": false
 }

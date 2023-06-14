@@ -9,6 +9,8 @@ var json = JSON.parse(JSONString);
 function loadDefaultSettings() {
     var incognitoSwitch = document.getElementById("incognitoSwitch");
     incognitoSwitch.checked = json.incognito;
+    var forceHTTPSSwitch = document.getElementById("forceHTTPSSwitch");
+    forceHTTPSSwitch.checked = json.force_https;
 }
 
 function switchChangeState(element) {
