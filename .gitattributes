@@ -1,2 +1,2 @@
 * text=auto
-linguist-vendored=false
+src/** linguist-vendored=false
