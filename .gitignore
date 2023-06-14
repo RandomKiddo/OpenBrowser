@@ -4,5 +4,7 @@ venv/
 # Mac
 *.DS_Store
 
-# PyChard
+# PyCharm
 *.idea/
+src/__pycache__/
+src/loading_logs/
