@@ -93,8 +93,10 @@ class MainWindow(QMainWindow):
         self.reload_sc.activated.connect(lambda: self.tabs.currentWidget().reload())
         self.goto_tab_sc = QShortcut(QKeySequence('Ctrl+K'), self)  # Goto tab shortcut
         self.goto_tab_sc.activated.connect(lambda: self.prompt_goto())
-        self.find_on_page_sc = QShortcut(QKeySequence('Ctrl+F'), self)
+        self.find_on_page_sc = QShortcut(QKeySequence('Ctrl+F'), self)  # todo finish
         self.find_on_page_sc.activated.connect(lambda: self.find_dialogue())
+        self.print_sc = QShortcut(QKeySequence('Ctrl+P'), self)
+        self.print_sc.activated.connect(lambda: self.print_screen())
 
         self.logger.log('Shortcuts active\n')
 
@@ -121,7 +123,7 @@ class MainWindow(QMainWindow):
             self.logger.log('ERROR: SETTINGS.json file not found! Generating default configurations...\n')
             data = {
                 'incognito': False,
-                  "force_https": False
+                "force_https": False
             }
             json.dump(data, open('cache/SETTINGS.json', 'w'))
         else:
@@ -296,6 +298,9 @@ class MainWindow(QMainWindow):
         self.more.setCurrentIndex(0)
 
     def find_dialogue(self):
+        pass
+
+    def print_screen(self):
         pass
 
 class HistoryEntry:

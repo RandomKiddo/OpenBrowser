@@ -2,6 +2,8 @@
 
 An open source browser created in Python
 
+[![License](https://img.shields.io/github/license/RandomKiddo/OpenBrowser)](https://opensource.org/licenses/MIT)
+[![Size](https://img.shields.io/github/repo-size/RandomKiddo/OpenBrowser)](https://www.github.com/RandomKiddo/OpenBrowser/)
 ___
 
 ### Acknowledgements
@@ -29,6 +31,6 @@ ___
 
 [Back to Top](#openbrowser)
 
-<sub>This page was last edited on 01.13.2023</sub>
+<sub>This page was last edited on 06.14.2023</sub>
 
 <sub>Copyright © 2023 RandomKiddo - MIT License Protected</sub>

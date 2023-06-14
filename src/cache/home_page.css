@@ -1,0 +1,35 @@
+/* This program is protected by the MIT License © 2023 RandomKiddo */
+#about {
+    font-family: Georgia, serif;
+    font-size: small;
+}
+
+#footer {
+    font-family: Georgia, serif;
+    font-size: smaller;
+    font-style: italic;
+}
+
+div {
+    text-align: center;
+}
+
+a:link {
+    color: #2196F3;
+    text-decoration-line: none;
+}
+
+a:visited {
+    color: slategray;
+    text-decoration-line: none;
+}
+
+a:hover {
+    text-decoration-line: underline;
+}
+
+a:active {
+    color: slategray;
+}
+
+
