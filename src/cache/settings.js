@@ -3,31 +3,21 @@ This program is protected by the MIT License © 2023 RandomKiddo
 */
 
 var fs = require("fs");
+var JSONString = fs.readFileSync("./SETTINGS.json", "utf8");
+var json = JSON.parse(JSONString);
 
 function loadDefaultSettings() {
-    fs.readFile("./SETTINGS.json", "utf8", (err, jsonString) => {
-        if (err) {
-            console.log("File read error: ", err);
-            return;
-        }
-        try {
-            var data = JSON.parse(jsonString);
-        } catch (err) {
-            console.log(err);
-            return;
-        }
-        var incognitoSwitch = document.getElementById("incognitoSwitch");
-        incognitoSwitch.checked = data.incognito;
-    });
+    var incognitoSwitch = document.getElementById("incognitoSwitch");
+    incognitoSwitch.checked = json.incognito;
 }
 
 function switchChangeState(element) {
     element.checked = !element.checked;
-    fs.readFile("./SETTINGS.json", "utf8", (err, jsonString) => {
-        if (err) {
-            console.log("File read error: ", err);
-            return;
-        }
-        // write to file
-    });
+    if (element.id.toString() === "incognitoSwitch") {
+        json.incognito = !json.incognito;
+        var newJSONString = JSON.stringify(json, null, 2);
+        fs.writeFileSync("./SETTINGS.json", newJSONString);
+    }
+    JSONString = fs.readFileSync("./SETTINGS.json", "utf8");
+    json = JSON.parse(JSONString);
 }

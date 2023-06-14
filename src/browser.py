@@ -11,10 +11,21 @@ import validators
 import pyautogui
 import datetime
 import os
+import json
+import time
+
+from logger import Logger
+
+# todo error log and update doc comments
+# todo obscure file://
+# todo file generation ensurance (ensure SETTINGS.json or create)
+# todo main logger
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)  # Call the superclass constructor
+
+        self.logger = Logger(name='OpenBrowser Main Logger')
 
         self.tabs = QTabWidget()  # Create tab widget
         self.tabs.setDocumentMode(True)  # Set to document mode
@@ -23,6 +34,8 @@ class MainWindow(QMainWindow):
         self.tabs.setTabsClosable(True)  # Allow tabs to be closed
         self.tabs.tabCloseRequested.connect(self.close_tab)  # Define what to do when closing a tab
         self.setCentralWidget(self.tabs)  # Set the tabs as the central widget
+
+        self.logger.log('Tab controls defined')
 
         self.status = QStatusBar()  # Create a status bar
         self.setStatusBar(self.status)
@@ -71,6 +84,8 @@ class MainWindow(QMainWindow):
 
         self.add_new_tab(QUrl('https://duckduckgo.com'), 'Homepage')  # Create the 'home' tab
 
+        self.logger.log('Navigation and home page initialized')
+
         # Create shortcuts
         self.new_tab_sc = QShortcut(QKeySequence('Ctrl+T'), self)  # New tab shortcut
         self.new_tab_sc.activated.connect(lambda: self.add_new_tab())
@@ -79,13 +94,30 @@ class MainWindow(QMainWindow):
         self.goto_tab_sc = QShortcut(QKeySequence('Ctrl+K'), self)  # Goto tab shortcut
         self.goto_tab_sc.activated.connect(lambda: self.prompt_goto())
 
+        self.logger.log('Shortcuts active')
+
         u_width, u_height = pyautogui.size()  # Get screen dimensions
         self.setMaximumWidth(u_width)  # Set max width
         self.setMaximumHeight(u_height)  # Set max height
 
+        self.logger.log('Max dimensions defined, browser now active')
+
         self.show()  # Show the window
 
         self.setWindowTitle('OpenBrowser - © 2023')  # Set the window title
+
+        self.ensure_data_generation()
+        self.logger.log('Data generation ensured')
+
+    def ensure_data_generation(self):
+        if not os.path.exists('cache/SETTINGS.json'):
+            self.logger.log('ERROR: SETTINGS.json file not found! Generating default configurations...')
+            data = {
+                'incognito': False
+            }
+            json.dump(data, open('cache/SETTINGS.json', 'w'))
+        else:
+            self.logger.log('SETTINGS.json located- ensured at user initiation')
 
     # Create a new tab with the passed url and title
     def add_new_tab(self, url=None, title='New Tab'):
@@ -191,6 +223,7 @@ class MainWindow(QMainWindow):
             a0.accept()
         else:
             a0.ignore()
+        self.logger.close()
 
     # Prompt the goto tab panel
     def prompt_goto(self):
@@ -204,9 +237,46 @@ class MainWindow(QMainWindow):
         i = dialog.getInt(self, msg, msg, 1, 1, self.tabs.count())
         self.tabs.setCurrentIndex(i[0]-1)
 
+    @staticmethod
+    def log(err, details='N/A', fix_suggest='None'):
+        curr_time = time.time()
+        with open(f'logs/ERROR_{curr_time}.log', 'w') as f:
+            header = f'An error occurred in the Open Browser - © 2023\nTimestamp: {curr_time}\nRelated To: {details}\nSuggested Fix: {fix_suggest}\n\n'
+            err = str(err)
+            f.writelines([header, err])
+        f.close()
+        return header
+
+    @staticmethod
+    def dialogue_error(val):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setText('An error occured with OpenBrowser')
+        msg.setInformativeText(val)
+        msg.setWindowTitle('Uh Oh')
+        msg.setStandardButtons(QMessageBox.Close)
+        i = msg.exec_()
+
     # Go to the settings html file
     def go_to_settings(self):
-        pass
+        try:
+            f = json.load(open('cache/SETTINGS.json'))
+            assert type(f['incognito']) is bool
+        except AssertionError as aerr:
+            ret = MainWindow.log(aerr, 'Settings JSON File invalid, corrupted, unexpectedly modified, not able to be located, or not generated',
+                                 'Delete SETTINGS.json if present and restart OpenBrowser')
+            MainWindow.dialogue_error(ret)
+            return
+        except FileNotFoundError as fnferr:
+            ret = MainWindow.log(fnferr, 'Settings JSON File invalid, corrupted, unexpectedly modified, not able to be located, or not generated',
+                                 'Delete SETTINGS.json if present and restart OpenBrowser')
+            MainWindow.dialogue_error(ret)
+            return
+        self.add_new_tab(title='Settings')
+        self.tabs.setCurrentIndex(self.tabs.count() - 1)
+        self.url_bar.setText('file://' + os.path.realpath('cache/settings.html'))
+        self.navigate()
+        self.more.setCurrentIndex(0)
 
 class HistoryEntry:
     def __init__(self, qurl, time_accessed):
