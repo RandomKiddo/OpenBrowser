@@ -1,5 +1,1 @@
 * text=auto
-src/cache/* linguist-documentation=false
-src/cache/* linguist-vendored
-src/* linguist-documentation=false
-src/* linguist-vendored
