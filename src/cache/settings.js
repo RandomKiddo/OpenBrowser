@@ -11,6 +11,8 @@ function loadDefaultSettings() {
     incognitoSwitch.checked = json.incognito;
     var forceHTTPSSwitch = document.getElementById("forceHTTPSSwitch");
     forceHTTPSSwitch.checked = json.force_https;
+    var promptDownloadSwitch = document.getElementById("promptDownloadSwitch");
+    promptDownloadSwitch.checked = json.prompt_download;
 }
 
 function switchChangeState(element) {

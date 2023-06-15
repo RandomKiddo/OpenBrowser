@@ -2,10 +2,11 @@
 This program is protected by the MIT License © 2023 RandomKiddo
 */
 
-var emptySearch = document.getElementById("emptySearch");
-emptySearch.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        event.preventDefault();
-        //todo talk to Python to search
+function navigate() {
+    var value = document.forms["searchPlaceholder"]["gsearch"].value;
+    if (value.toString().startsWith("www") || value.toString().startsWith("http")) {
+        window.location = value.toString()
+    } else {
+        window.location = "https://duckduckgo.com/?q=" + value.toString();
     }
-});
+}

@@ -1,4 +1,5 @@
 {
   "incognito": false,
-  "force_https": false
+  "force_https": false,
+  "prompt_download": false
 }

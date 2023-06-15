@@ -123,7 +123,8 @@ class MainWindow(QMainWindow):
             self.logger.log('ERROR: SETTINGS.json file not found! Generating default configurations...\n')
             data = {
                 'incognito': False,
-                "force_https": False
+                "force_https": False,
+                "prompt_download": False
             }
             json.dump(data, open('cache/SETTINGS.json', 'w'))
         else:
